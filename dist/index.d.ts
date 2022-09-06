@@ -1,6 +1,5 @@
 /// <reference types="react" />
-import { StyleProp, ViewProps, ViewStyle } from "react-native";
-import { VideoProperties } from "react-native-video";
+import { StyleProp, ViewStyle } from "react-native";
 export interface DanmakuItemRawData {
     content: string;
     color: string;
@@ -35,9 +34,10 @@ export interface DanmakuPeriodProps {
     wrapperWidth: number;
     wrapperHeight: number;
     duration: number;
+    paused: boolean;
 }
 export declare function DanmakuPeriod(props: DanmakuPeriodProps): JSX.Element;
-interface DanmakuProps {
+export interface DanmakuPlayerProps {
     width: number;
     height: number;
     period: number;
@@ -48,11 +48,7 @@ interface DanmakuProps {
     fontSize: number;
     lineHeight: number;
     getDanmakuMethod: (startTimeStamp: number, endTimeStamp: number) => Promise<DanmakuItemRawData[]>;
-}
-interface DanmakuPlayerProps {
-    wrapperProps: ViewProps;
-    danmakuProps: DanmakuProps;
-    videoProps: VideoProperties;
+    paused: boolean;
+    currentTime: number;
 }
 export default function DanmakuPlayer(props: DanmakuPlayerProps): JSX.Element;
-export {};

@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react"
-import { Animated, Easing, StyleProp, Text, View, ViewProps, ViewStyle } from "react-native"
-import Video, { OnProgressData, VideoProperties } from "react-native-video"
+import React, { memo, useEffect, useMemo, useRef, useState } from "react"
+import { Animated, Easing, StyleProp, Text, View, ViewStyle } from "react-native"
 
 export interface DanmakuItemRawData {
     content: string
@@ -58,25 +57,33 @@ export interface DanmakuPeriodProps {
     wrapperWidth: number
     wrapperHeight: number
     duration: number
+    paused: boolean
 }
 
 export function DanmakuPeriod(props: DanmakuPeriodProps) {
-    const { data, startTimeStamp, endTimeStamp, lineHeight, fontSize, wrapperWidth, wrapperHeight, duration } = props
+    const { data, startTimeStamp, endTimeStamp, lineHeight, fontSize, wrapperWidth, wrapperHeight, duration, paused } = props
     const period = endTimeStamp - startTimeStamp
     const speed = wrapperWidth / duration
     const width = speed * period
     const showList = useMemo(() => getDanmakuPosition({ startTimeStamp, endTimeStamp, data, width, height: wrapperHeight, fontSize, lineHeight }), [startTimeStamp, endTimeStamp, data, width, wrapperHeight, fontSize, lineHeight])
     const translateX = useRef(new Animated.Value(0)).current
-    useEffect(() => {
+    const animation = useRef(
         Animated.timing(translateX, {
             toValue: -2 * wrapperWidth,
             duration: duration * 2,
             useNativeDriver: true,
             easing: Easing.linear
-        }).start()
-    }, [])
-    console.log(startTimeStamp)
-    console.log(showList)
+        })
+    ).current
+
+    useEffect(() => {
+        if (paused) {
+            animation.stop()
+        } else {
+            animation.start()
+        }
+    }, [paused])
+
     return (
         <Animated.View style={{ position: "absolute", left: wrapperWidth, width, height: wrapperHeight, top: 0, transform: [{ translateX }] }}>
             {showList.map(value => {
@@ -91,7 +98,38 @@ export function DanmakuPeriod(props: DanmakuPeriodProps) {
     )
 }
 
-interface DanmakuProps {
+interface DanmakuAreaProps {
+    width: number
+    height: number
+    period: number
+    duration: number
+    style: StyleProp<ViewStyle>
+    fontSize: number
+    lineHeight: number
+    paused: boolean
+    showPeriodDataList: { [period: number]: DanmakuItemRawData[] }
+    currentPeriodCount: number
+    random: number
+}
+
+const DanmakuArea = memo(function (props: DanmakuAreaProps) {
+    const { style, width, height, showPeriodDataList, duration, period, currentPeriodCount, paused, random, fontSize, lineHeight } = props
+    return (
+        <View style={{ left: 0, top: 0, ...((style as any) || {}), width, height }}>
+            {Object.keys(showPeriodDataList)
+                .filter(key => {
+                    const index = Number(key)
+                    return index + (duration * 2) / period >= currentPeriodCount && index <= currentPeriodCount
+                })
+                .map(key => {
+                    const index = Number(key)
+                    return <DanmakuPeriod paused={paused} key={`${random}${key}`} wrapperWidth={width} duration={duration} startTimeStamp={index * period} endTimeStamp={(index + 1) * period} wrapperHeight={height} fontSize={fontSize} lineHeight={lineHeight} data={showPeriodDataList[index]} />
+                })}
+        </View>
+    )
+})
+
+export interface DanmakuPlayerProps {
     width: number
     height: number
     period: number
@@ -102,22 +140,14 @@ interface DanmakuProps {
     fontSize: number
     lineHeight: number
     getDanmakuMethod: (startTimeStamp: number, endTimeStamp: number) => Promise<DanmakuItemRawData[]>
-}
-
-interface DanmakuPlayerProps {
-    wrapperProps: ViewProps
-    danmakuProps: DanmakuProps
-    videoProps: VideoProperties
+    paused: boolean
+    currentTime: number
 }
 
 export default function DanmakuPlayer(props: DanmakuPlayerProps) {
-    const { wrapperProps, danmakuProps, videoProps } = props
+    const { width, height, duration, period, style, judge, ahead, getDanmakuMethod, fontSize, lineHeight, paused, currentTime } = props
 
-    const { onProgress } = videoProps
-
-    const { width, height, duration, period, style, judge, ahead, getDanmakuMethod, fontSize, lineHeight } = danmakuProps
-
-    const currentTime = useRef(0)
+    const storageTime = useRef(currentTime)
 
     // 主要作用是是否重新渲染
     const [random, setRandom] = useState(Date.now())
@@ -130,14 +160,13 @@ export default function DanmakuPlayer(props: DanmakuPlayerProps) {
 
     const requestList = useRef<number[]>([])
 
-    const videoProgress = (onProgressData: OnProgressData) => {
-        const time = onProgressData.currentTime * 1000
-        if (Math.abs(time - currentTime.current) > (judge || 1000)) {
+    useEffect(() => {
+        if (Math.abs(currentTime - storageTime.current) > (judge || 1000)) {
             setRandom(Date.now())
             setShowPeriodDataList({})
         }
-        currentTime.current = time
-        const periodCount = Math.floor(time / period)
+        storageTime.current = currentTime
+        const periodCount = Math.floor(currentTime / period)
         setCurrentPeriodCount(periodCount)
         for (let i = periodCount; i <= periodCount + (ahead || 1); i++) {
             if (!periodDataList[i] && !requestList.current.includes(i)) {
@@ -154,23 +183,7 @@ export default function DanmakuPlayer(props: DanmakuPlayerProps) {
             showPeriodDataList[periodCount] = periodDataList[periodCount]
             setShowPeriodDataList({ ...showPeriodDataList })
         }
-        onProgress && onProgress(onProgressData)
-    }
+    }, [currentTime])
 
-    return (
-        <View {...wrapperProps}>
-            <Video {...videoProps} onProgress={videoProgress} />
-            <View style={{ left: 0, top: 0, ...((style as any) || {}), width, height, position: "absolute" }}>
-                {Object.keys(showPeriodDataList)
-                    .filter(key => {
-                        const index = Number(key)
-                        return index + (duration * 2) / period >= currentPeriodCount && index <= currentPeriodCount
-                    })
-                    .map(key => {
-                        const index = Number(key)
-                        return <DanmakuPeriod key={`${random}${key}`} wrapperWidth={width} duration={duration} startTimeStamp={index * period} endTimeStamp={(index + 1) * period} wrapperHeight={height} fontSize={fontSize} lineHeight={lineHeight} data={showPeriodDataList[index]} />
-                    })}
-            </View>
-        </View>
-    )
+    return <DanmakuArea width={width} height={height} lineHeight={lineHeight} fontSize={fontSize} style={style} period={period} duration={duration} paused={paused} showPeriodDataList={showPeriodDataList} currentPeriodCount={currentPeriodCount} random={random} />
 }

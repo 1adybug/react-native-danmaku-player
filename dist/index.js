@@ -22,14 +22,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DanmakuPeriod = exports.getDanmakuPosition = void 0;
 const react_1 = __importStar(require("react"));
 const react_native_1 = require("react-native");
-const react_native_video_1 = __importDefault(require("react-native-video"));
 function getDanmakuPosition(config) {
     const { data, startTimeStamp, endTimeStamp, width, height, lineHeight, fontSize } = config;
     const columnCount = Math.floor(height / lineHeight);
@@ -51,47 +47,60 @@ function getDanmakuPosition(config) {
 }
 exports.getDanmakuPosition = getDanmakuPosition;
 function DanmakuPeriod(props) {
-    const { data, startTimeStamp, endTimeStamp, lineHeight, fontSize, wrapperWidth, wrapperHeight, duration } = props;
+    const { data, startTimeStamp, endTimeStamp, lineHeight, fontSize, wrapperWidth, wrapperHeight, duration, paused } = props;
     const period = endTimeStamp - startTimeStamp;
     const speed = wrapperWidth / duration;
     const width = speed * period;
     const showList = (0, react_1.useMemo)(() => getDanmakuPosition({ startTimeStamp, endTimeStamp, data, width, height: wrapperHeight, fontSize, lineHeight }), [startTimeStamp, endTimeStamp, data, width, wrapperHeight, fontSize, lineHeight]);
     const translateX = (0, react_1.useRef)(new react_native_1.Animated.Value(0)).current;
+    const animation = (0, react_1.useRef)(react_native_1.Animated.timing(translateX, {
+        toValue: -2 * wrapperWidth,
+        duration: duration * 2,
+        useNativeDriver: true,
+        easing: react_native_1.Easing.linear
+    })).current;
     (0, react_1.useEffect)(() => {
-        react_native_1.Animated.timing(translateX, {
-            toValue: -2 * wrapperWidth,
-            duration: duration * 2,
-            useNativeDriver: true,
-            easing: react_native_1.Easing.linear
-        }).start();
-    }, []);
-    console.log(startTimeStamp);
-    console.log(showList);
+        if (paused) {
+            animation.stop();
+        }
+        else {
+            animation.start();
+        }
+    }, [paused]);
     return (react_1.default.createElement(react_native_1.Animated.View, { style: { position: "absolute", left: wrapperWidth, width, height: wrapperHeight, top: 0, transform: [{ translateX }] } }, showList.map(value => {
         const { content, color, left, top, lineHeight, fontSize, id } = value;
         return (react_1.default.createElement(react_native_1.Text, { key: id, style: { position: "absolute", top, color, left, lineHeight, fontSize } }, content));
     })));
 }
 exports.DanmakuPeriod = DanmakuPeriod;
+const DanmakuArea = (0, react_1.memo)(function (props) {
+    const { style, width, height, showPeriodDataList, duration, period, currentPeriodCount, paused, random, fontSize, lineHeight } = props;
+    return (react_1.default.createElement(react_native_1.View, { style: { left: 0, top: 0, ...(style || {}), width, height } }, Object.keys(showPeriodDataList)
+        .filter(key => {
+        const index = Number(key);
+        return index + (duration * 2) / period >= currentPeriodCount && index <= currentPeriodCount;
+    })
+        .map(key => {
+        const index = Number(key);
+        return react_1.default.createElement(DanmakuPeriod, { paused: paused, key: `${random}${key}`, wrapperWidth: width, duration: duration, startTimeStamp: index * period, endTimeStamp: (index + 1) * period, wrapperHeight: height, fontSize: fontSize, lineHeight: lineHeight, data: showPeriodDataList[index] });
+    })));
+});
 function DanmakuPlayer(props) {
-    const { wrapperProps, danmakuProps, videoProps } = props;
-    const { onProgress } = videoProps;
-    const { width, height, duration, period, style, judge, ahead, getDanmakuMethod, fontSize, lineHeight } = danmakuProps;
-    const currentTime = (0, react_1.useRef)(0);
+    const { width, height, duration, period, style, judge, ahead, getDanmakuMethod, fontSize, lineHeight, paused, currentTime } = props;
+    const storageTime = (0, react_1.useRef)(currentTime);
     // 主要作用是是否重新渲染
     const [random, setRandom] = (0, react_1.useState)(Date.now());
     const [currentPeriodCount, setCurrentPeriodCount] = (0, react_1.useState)(-1);
     const [periodDataList, setPeriodDataList] = (0, react_1.useState)({});
     const [showPeriodDataList, setShowPeriodDataList] = (0, react_1.useState)({});
     const requestList = (0, react_1.useRef)([]);
-    const videoProgress = (onProgressData) => {
-        const time = onProgressData.currentTime * 1000;
-        if (Math.abs(time - currentTime.current) > (judge || 1000)) {
+    (0, react_1.useEffect)(() => {
+        if (Math.abs(currentTime - storageTime.current) > (judge || 1000)) {
             setRandom(Date.now());
             setShowPeriodDataList({});
         }
-        currentTime.current = time;
-        const periodCount = Math.floor(time / period);
+        storageTime.current = currentTime;
+        const periodCount = Math.floor(currentTime / period);
         setCurrentPeriodCount(periodCount);
         for (let i = periodCount; i <= periodCount + (ahead || 1); i++) {
             if (!periodDataList[i] && !requestList.current.includes(i)) {
@@ -108,19 +117,8 @@ function DanmakuPlayer(props) {
             showPeriodDataList[periodCount] = periodDataList[periodCount];
             setShowPeriodDataList({ ...showPeriodDataList });
         }
-        onProgress && onProgress(onProgressData);
-    };
-    return (react_1.default.createElement(react_native_1.View, { ...wrapperProps },
-        react_1.default.createElement(react_native_video_1.default, { ...videoProps, onProgress: videoProgress }),
-        react_1.default.createElement(react_native_1.View, { style: { left: 0, top: 0, ...(style || {}), width, height, position: "absolute" } }, Object.keys(showPeriodDataList)
-            .filter(key => {
-            const index = Number(key);
-            return index + (duration * 2) / period >= currentPeriodCount && index <= currentPeriodCount;
-        })
-            .map(key => {
-            const index = Number(key);
-            return react_1.default.createElement(DanmakuPeriod, { key: `${random}${key}`, wrapperWidth: width, duration: duration, startTimeStamp: index * period, endTimeStamp: (index + 1) * period, wrapperHeight: height, fontSize: fontSize, lineHeight: lineHeight, data: showPeriodDataList[index] });
-        }))));
+    }, [currentTime]);
+    return react_1.default.createElement(DanmakuArea, { width: width, height: height, lineHeight: lineHeight, fontSize: fontSize, style: style, period: period, duration: duration, paused: paused, showPeriodDataList: showPeriodDataList, currentPeriodCount: currentPeriodCount, random: random });
 }
 exports.default = DanmakuPlayer;
 //# sourceMappingURL=index.js.map
