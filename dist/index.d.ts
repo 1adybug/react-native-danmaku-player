@@ -35,6 +35,8 @@ export interface DanmakuPeriodProps {
     wrapperHeight: number;
     duration: number;
     paused: boolean;
+    textShadowColor?: string;
+    textShadowRadius?: number;
 }
 export declare function DanmakuPeriod(props: DanmakuPeriodProps): JSX.Element;
 export interface DanmakuPlayerProps {
@@ -50,5 +52,7 @@ export interface DanmakuPlayerProps {
     getDanmakuMethod: (startTimeStamp: number, endTimeStamp: number) => Promise<DanmakuItemRawData[]>;
     paused: boolean;
     currentTime: number;
+    textShadowColor?: string;
+    textShadowRadius?: number;
 }
 export default function DanmakuPlayer(props: DanmakuPlayerProps): JSX.Element;

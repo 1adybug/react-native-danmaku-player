@@ -47,7 +47,7 @@ function getDanmakuPosition(config) {
 }
 exports.getDanmakuPosition = getDanmakuPosition;
 function DanmakuPeriod(props) {
-    const { data, startTimeStamp, endTimeStamp, lineHeight, fontSize, wrapperWidth, wrapperHeight, duration, paused } = props;
+    const { data, startTimeStamp, endTimeStamp, lineHeight, fontSize, wrapperWidth, wrapperHeight, duration, paused, textShadowColor, textShadowRadius } = props;
     const period = endTimeStamp - startTimeStamp;
     const speed = wrapperWidth / duration;
     const width = speed * period;
@@ -69,12 +69,12 @@ function DanmakuPeriod(props) {
     }, [paused]);
     return (react_1.default.createElement(react_native_1.Animated.View, { style: { position: "absolute", left: wrapperWidth, width, height: wrapperHeight, top: 0, transform: [{ translateX }] } }, showList.map(value => {
         const { content, color, left, top, lineHeight, fontSize, id } = value;
-        return (react_1.default.createElement(react_native_1.Text, { key: id, style: { position: "absolute", top, color, left, lineHeight, fontSize } }, content));
+        return (react_1.default.createElement(react_native_1.Text, { key: id, style: { position: "absolute", top, color, left, lineHeight, fontSize, textShadowColor, textShadowRadius } }, content));
     })));
 }
 exports.DanmakuPeriod = DanmakuPeriod;
 const DanmakuArea = (0, react_1.memo)(function (props) {
-    const { style, width, height, showPeriodDataList, duration, period, currentPeriodCount, paused, random, fontSize, lineHeight } = props;
+    const { style, width, height, showPeriodDataList, duration, period, currentPeriodCount, paused, random, fontSize, lineHeight, textShadowColor, textShadowRadius } = props;
     return (react_1.default.createElement(react_native_1.View, { style: { left: 0, top: 0, ...(style || {}), width, height } }, Object.keys(showPeriodDataList)
         .filter(key => {
         const index = Number(key);
@@ -82,11 +82,11 @@ const DanmakuArea = (0, react_1.memo)(function (props) {
     })
         .map(key => {
         const index = Number(key);
-        return react_1.default.createElement(DanmakuPeriod, { paused: paused, key: `${random}${key}`, wrapperWidth: width, duration: duration, startTimeStamp: index * period, endTimeStamp: (index + 1) * period, wrapperHeight: height, fontSize: fontSize, lineHeight: lineHeight, data: showPeriodDataList[index] });
+        return react_1.default.createElement(DanmakuPeriod, { paused: paused, key: `${random}${key}`, wrapperWidth: width, duration: duration, startTimeStamp: index * period, endTimeStamp: (index + 1) * period, wrapperHeight: height, fontSize: fontSize, lineHeight: lineHeight, data: showPeriodDataList[index], textShadowColor: textShadowColor, textShadowRadius: textShadowRadius });
     })));
 });
 function DanmakuPlayer(props) {
-    const { width, height, duration, period, style, judge, ahead, getDanmakuMethod, fontSize, lineHeight, paused, currentTime } = props;
+    const { width, height, duration, period, style, judge, ahead, getDanmakuMethod, fontSize, lineHeight, paused, currentTime, textShadowColor, textShadowRadius } = props;
     const storageTime = (0, react_1.useRef)(currentTime);
     // 主要作用是是否重新渲染
     const [random, setRandom] = (0, react_1.useState)(Date.now());
@@ -118,7 +118,7 @@ function DanmakuPlayer(props) {
             setShowPeriodDataList({ ...showPeriodDataList });
         }
     }, [currentTime]);
-    return react_1.default.createElement(DanmakuArea, { width: width, height: height, lineHeight: lineHeight, fontSize: fontSize, style: style, period: period, duration: duration, paused: paused, showPeriodDataList: showPeriodDataList, currentPeriodCount: currentPeriodCount, random: random });
+    return react_1.default.createElement(DanmakuArea, { width: width, height: height, lineHeight: lineHeight, fontSize: fontSize, style: style, period: period, duration: duration, paused: paused, showPeriodDataList: showPeriodDataList, currentPeriodCount: currentPeriodCount, random: random, textShadowColor: textShadowColor, textShadowRadius: textShadowRadius });
 }
 exports.default = DanmakuPlayer;
 //# sourceMappingURL=index.js.map
