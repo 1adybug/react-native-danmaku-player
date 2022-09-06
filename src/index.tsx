@@ -58,10 +58,12 @@ export interface DanmakuPeriodProps {
     wrapperHeight: number
     duration: number
     paused: boolean
+    textShadowColor?: string
+    textShadowRadius?: number
 }
 
 export function DanmakuPeriod(props: DanmakuPeriodProps) {
-    const { data, startTimeStamp, endTimeStamp, lineHeight, fontSize, wrapperWidth, wrapperHeight, duration, paused } = props
+    const { data, startTimeStamp, endTimeStamp, lineHeight, fontSize, wrapperWidth, wrapperHeight, duration, paused, textShadowColor, textShadowRadius } = props
     const period = endTimeStamp - startTimeStamp
     const speed = wrapperWidth / duration
     const width = speed * period
@@ -89,7 +91,7 @@ export function DanmakuPeriod(props: DanmakuPeriodProps) {
             {showList.map(value => {
                 const { content, color, left, top, lineHeight, fontSize, id } = value
                 return (
-                    <Text key={id} style={{ position: "absolute", top, color, left, lineHeight, fontSize }}>
+                    <Text key={id} style={{ position: "absolute", top, color, left, lineHeight, fontSize, textShadowColor, textShadowRadius }}>
                         {content}
                     </Text>
                 )
@@ -110,10 +112,12 @@ interface DanmakuAreaProps {
     showPeriodDataList: { [period: number]: DanmakuItemRawData[] }
     currentPeriodCount: number
     random: number
+    textShadowColor?: string
+    textShadowRadius?: number
 }
 
 const DanmakuArea = memo(function (props: DanmakuAreaProps) {
-    const { style, width, height, showPeriodDataList, duration, period, currentPeriodCount, paused, random, fontSize, lineHeight } = props
+    const { style, width, height, showPeriodDataList, duration, period, currentPeriodCount, paused, random, fontSize, lineHeight, textShadowColor, textShadowRadius } = props
     return (
         <View style={{ left: 0, top: 0, ...((style as any) || {}), width, height }}>
             {Object.keys(showPeriodDataList)
@@ -123,7 +127,7 @@ const DanmakuArea = memo(function (props: DanmakuAreaProps) {
                 })
                 .map(key => {
                     const index = Number(key)
-                    return <DanmakuPeriod paused={paused} key={`${random}${key}`} wrapperWidth={width} duration={duration} startTimeStamp={index * period} endTimeStamp={(index + 1) * period} wrapperHeight={height} fontSize={fontSize} lineHeight={lineHeight} data={showPeriodDataList[index]} />
+                    return <DanmakuPeriod paused={paused} key={`${random}${key}`} wrapperWidth={width} duration={duration} startTimeStamp={index * period} endTimeStamp={(index + 1) * period} wrapperHeight={height} fontSize={fontSize} lineHeight={lineHeight} data={showPeriodDataList[index]} textShadowColor={textShadowColor} textShadowRadius={textShadowRadius} />
                 })}
         </View>
     )
@@ -142,10 +146,12 @@ export interface DanmakuPlayerProps {
     getDanmakuMethod: (startTimeStamp: number, endTimeStamp: number) => Promise<DanmakuItemRawData[]>
     paused: boolean
     currentTime: number
+    textShadowColor?: string
+    textShadowRadius?: number
 }
 
 export default function DanmakuPlayer(props: DanmakuPlayerProps) {
-    const { width, height, duration, period, style, judge, ahead, getDanmakuMethod, fontSize, lineHeight, paused, currentTime } = props
+    const { width, height, duration, period, style, judge, ahead, getDanmakuMethod, fontSize, lineHeight, paused, currentTime, textShadowColor, textShadowRadius } = props
 
     const storageTime = useRef(currentTime)
 
@@ -185,5 +191,5 @@ export default function DanmakuPlayer(props: DanmakuPlayerProps) {
         }
     }, [currentTime])
 
-    return <DanmakuArea width={width} height={height} lineHeight={lineHeight} fontSize={fontSize} style={style} period={period} duration={duration} paused={paused} showPeriodDataList={showPeriodDataList} currentPeriodCount={currentPeriodCount} random={random} />
+    return <DanmakuArea width={width} height={height} lineHeight={lineHeight} fontSize={fontSize} style={style} period={period} duration={duration} paused={paused} showPeriodDataList={showPeriodDataList} currentPeriodCount={currentPeriodCount} random={random} textShadowColor={textShadowColor} textShadowRadius={textShadowRadius} />
 }
