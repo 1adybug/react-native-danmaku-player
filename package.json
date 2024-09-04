@@ -5,19 +5,24 @@
     "types": "dist/index.d.ts",
     "license": "MIT",
     "description": "React Native Danmaku Player 弹幕播放器",
-    "devDependencies": {
-        "@types/react": "^18.3.5",
-        "typescript": "^5.5.4"
-    },
-    "peerDependencies": {
-        "react-native": "^0.75.2"
-    },
     "repository": {
         "type": "git",
-        "url": "https://github.com/1adybug/react-native-danmaku-player"
+        "url": "git+https://github.com/1adybug/react-native-danmaku-player"
     },
     "scripts": {
-        "build": "npx tsc -p ."
+        "build": "npx tsc -p .",
+        "prepublish": "npm run build"
+    },
+    "authors": [
+        "lurongv@qq.com"
+    ],
+    "files": [
+        "dist",
+        "src"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
     },
     "keywords": [
         "react-native-danmaku",
@@ -30,5 +35,12 @@
     ],
     "dependencies": {
         "ahooks": "^3.8.1"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.5",
+        "typescript": "^5.5.4"
+    },
+    "peerDependencies": {
+        "react-native": "^0.75.2"
     }
 }
