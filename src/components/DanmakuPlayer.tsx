@@ -1,4 +1,4 @@
-import { ComponentProps, useState } from "react"
+import { ComponentProps, Fragment, useRef, useState } from "react"
 import { LayoutChangeEvent, StyleProp, TextStyle, View } from "react-native"
 import DanmakuPeriod from "./DanmakuPeriod"
 
@@ -90,6 +90,15 @@ export default function DanmakuPlayer<T extends DanmakuItemRawData>({
     const [width, setWidth] = useState<number | undefined>(undefined)
     const [height, setHeight] = useState<number | undefined>(undefined)
     const [periodIndexs, setPeriodIndexs] = useState(() => new Set<number>())
+    const [key, setKey] = useState(Date.now())
+    const storageTime = useRef(currentTime)
+
+    if (storageTime.current > currentTime || currentTime - storageTime.current > threshold) {
+        setPeriodIndexs(new Set<number>())
+        setKey(Date.now())
+    }
+
+    storageTime.current = currentTime
 
     function _onLayout(event: LayoutChangeEvent) {
         onLayout?.(event)
@@ -114,25 +123,27 @@ export default function DanmakuPlayer<T extends DanmakuItemRawData>({
 
     return (
         <View onLayout={_onLayout} {...rest}>
-            {width &&
-                height &&
-                Array.from(periodIndexs).map(periodIndex => (
-                    <DanmakuPeriod<T>
-                        key={periodIndex}
-                        currentTime={currentTime}
-                        startTimeStamp={periodIndex * period}
-                        endTimeStamp={(periodIndex + 1) * period}
-                        lineHeight={lineHeight}
-                        fontSize={fontSize}
-                        wrapperWidth={width}
-                        wrapperHeight={height}
-                        duration={duration}
-                        paused={paused}
-                        loader={loader}
-                        danmakuStyle={danmakuStyle}
-                        onEnd={() => removePeriodIndex(periodIndex)}
-                    />
-                ))}
+            <Fragment key={key}>
+                {width &&
+                    height &&
+                    Array.from(periodIndexs).map(periodIndex => (
+                        <DanmakuPeriod<T>
+                            key={periodIndex}
+                            currentTime={currentTime}
+                            startTimeStamp={periodIndex * period}
+                            endTimeStamp={(periodIndex + 1) * period}
+                            lineHeight={lineHeight}
+                            fontSize={fontSize}
+                            wrapperWidth={width}
+                            wrapperHeight={height}
+                            duration={duration}
+                            paused={paused}
+                            loader={loader}
+                            danmakuStyle={danmakuStyle}
+                            onEnd={() => removePeriodIndex(periodIndex)}
+                        />
+                    ))}
+            </Fragment>
         </View>
     )
 }

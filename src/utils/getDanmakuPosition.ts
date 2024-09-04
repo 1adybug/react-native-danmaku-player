@@ -1,4 +1,4 @@
-import { DanmakuItemRawData } from "../DanmakuPlayer"
+import { DanmakuItemRawData } from "../components/DanmakuPlayer"
 
 /** 弹幕展示的数据 */
 export interface DanmakuItemShowData<T extends DanmakuItemRawData> {
