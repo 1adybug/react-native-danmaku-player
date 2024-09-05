@@ -50,7 +50,13 @@ export interface DanmakuPlayerProps<T extends DanmakuItemRawData> extends Omit<C
     /** 用于获取弹幕数据的异步函数 */
     loader: DanmakuDataLoader<T>
 
-    /** 预加载周期数 */
+    /**
+     * 预加载周期数
+     *
+     * 比如当前周期为 5，预加载为 2，那么会加载 5、6、7 这 3 个周期的弹幕
+     *
+     * @default 0
+     */
     preload?: number
 
     /** 是否暂停播放 */

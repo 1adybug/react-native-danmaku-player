@@ -10,7 +10,7 @@
         "url": "git+https://github.com/1adybug/react-native-danmaku-player"
     },
     "scripts": {
-        "build": "npx tsc -p .",
+        "build": "node scripts/build.mjs",
         "prepublish": "npm run build"
     },
     "authors": [
@@ -34,10 +34,13 @@
         "弹幕"
     ],
     "dependencies": {
-        "ahooks": "^3.8.1"
+        "ahooks": "^3.8.1",
+        "react-native-video": "^6.5.0"
     },
     "devDependencies": {
+        "@types/node": "^22.5.4",
         "@types/react": "^18.3.5",
+        "soda-nodejs": "^0.4.0",
         "typescript": "^5.5.4"
     },
     "peerDependencies": {
