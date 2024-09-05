@@ -7,11 +7,11 @@
     "description": "React Native Danmaku Player 弹幕播放器",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/1adybug/react-native-danmaku-player"
+        "url": "git+https://github.com/1adybug/react-native-danmaku-player.git"
     },
     "scripts": {
         "build": "node scripts/build.mjs",
-        "prepublish": "npm run build"
+        "prepublishOnly": "npm run build"
     },
     "authors": [
         "lurongv@qq.com"
