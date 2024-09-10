@@ -10,6 +10,29 @@
 ```TypeScript
 import { ComponentProps } from "react";
 import { StyleProp, TextStyle, View } from "react-native";
+/** 弹幕展示的数据 */
+export interface DanmakuItemShowData<T extends DanmakuItemRawData> {
+    /** 弹幕原始数据 */
+    data: T;
+    /** 上边距 */
+    top: number;
+    /** 行高 */
+    lineHeight: number;
+    /** 字体大小 */
+    fontSize: number;
+}
+export interface GetDanmakuPositionConfig<T extends DanmakuItemRawData> {
+    /** 弹幕的原始数据 */
+    data: T[];
+    /** 弹幕区域的高度 */
+    height: number;
+    /** 弹幕的行高 */
+    lineHeight: number;
+    /** 弹幕的字体大小 */
+    fontSize: number;
+}
+/** 生成弹幕的位置 */
+export declare function getDanmakuPosition<T extends DanmakuItemRawData>(config: GetDanmakuPositionConfig<T>): DanmakuItemShowData<T>[];
 /** 弹幕原始数据 */
 export interface DanmakuItemRawData {
     /** 文字内容 */
@@ -31,7 +54,7 @@ startTimeStamp: number,
 endTimeStamp: number) => Promise<T[]>;
 /** 设置弹幕的样式 */
 export type GetDanmakuStyle<T extends DanmakuItemRawData> = (danmaku: T) => StyleProp<TextStyle>;
-export interface DanmakuPlayerProps<T extends DanmakuItemRawData> extends Omit<ComponentProps<typeof View>, "children"> {
+export type DanmakuPlayerBaseProps<T extends DanmakuItemRawData> = {
     /**
      * 弹幕的周期，单位毫秒。
      *
@@ -39,6 +62,8 @@ export interface DanmakuPlayerProps<T extends DanmakuItemRawData> extends Omit<C
      */
     period: number;
     /** 弹幕的从右侧到达左侧的间隔，单位毫秒 */
+    lifetime: number;
+    /** 视频的时长，单位毫秒 */
     duration: number;
     /**
      * 视频时间是否发生了激变，单位毫秒
@@ -55,13 +80,13 @@ export interface DanmakuPlayerProps<T extends DanmakuItemRawData> extends Omit<C
      *
      * 比如当前周期为 5，预加载为 2，那么会加载 5、6、7 这 3 个周期的弹幕
      *
-     * @default 0
+     * @default 1
      */
     preload?: number;
     /** 是否暂停播放 */
     paused: boolean;
     /** 当前的视频进度的时间戳，单位毫秒 */
-    currentTime: number;
+    current: number;
     /** 弹幕字体大小 */
     fontSize: number;
     /** 弹幕的行高，建议设置为弹幕字体的 1.5 倍或者 2 倍 */
@@ -72,8 +97,18 @@ export interface DanmakuPlayerProps<T extends DanmakuItemRawData> extends Omit<C
      * 可以是一个样式对象，也可以是一个函数，函数的参数是弹幕的原始数据，返回值是一个样式对象
      */
     danmakuStyle?: StyleProp<TextStyle> | GetDanmakuStyle<T>;
-}
-export default function DanmakuPlayer<T extends DanmakuItemRawData>({ period, duration, threshold, loader, preload, paused, currentTime, fontSize, lineHeight, danmakuStyle, onLayout, ...rest }: DanmakuPlayerProps<T>): import("react").JSX.Element;
+    /**
+     * 容器宽度
+     */
+    width: number;
+    /**
+     * 容器高度
+     */
+    height: number;
+};
+export type DanmakuPlayerProps<T extends DanmakuItemRawData> = Omit<DanmakuPlayerBaseProps<T>, "width" | "height"> & Omit<ComponentProps<typeof View>, "children">;
+export declare function DanmakuPlayerBase<T extends DanmakuItemRawData>(props: DanmakuPlayerBaseProps<T>): import("react").JSX.Element;
+export default function DanmakuPlayer<T extends DanmakuItemRawData>(props: DanmakuPlayerProps<T>): import("react").JSX.Element;
 ```
 <!-- 类型结束 -->
 
@@ -89,7 +124,7 @@ export default function DanmakuPlayer<T extends DanmakuItemRawData>({ period, du
 import { FC, useState } from "react"
 import { useWindowDimensions, View } from "react-native"
 import DanmakuPlayer from "react-native-danmaku-player"
-import Video, { OnProgressData } from "react-native-video"
+import Video from "react-native-video"
 
 const App: FC = () => {
     const { width, height } = useWindowDimensions()
@@ -98,27 +133,32 @@ const App: FC = () => {
     const [paused, setPaused] = useState(false)
 
     // 当前的时间点，单位毫秒
-    const [currentTime, setCurrentTime] = useState(0)
+    const [current, setCurrent] = useState(0)
 
-    // 传递给 Video 组件的 onProgress 回调函数
-    function onProcess(onProgressData: OnProgressData) {
-        // 注意此处的单位换算
-        setCurrentTime(onProgressData.currentTime * 1000)
-    }
+    // 视频时长
+    const [duration, setDuration] = useState(0)
 
     return (
         <View style={{ width, height }}>
-            <Video paused={paused} source={{ uri: "your video source" }} style={{ width, height, backgroundColor: "black" }} onProgress={onProcess} />
+            <Video
+                paused={paused}
+                source={{ uri: "your video source" }}
+                style={{ width, height, backgroundColor: "black" }}
+                onProgress={e => setCurrent(e.current * 1000)}
+                onLoad={e => setDuration(e.duration * 1000)}
+            />
             <DanmakuPlayer
-                period={10000}
-                duration={15000}
+                period={22000}
+                lifetime={15000}
                 fontSize={18}
                 lineHeight={24}
                 paused={paused}
-                currentTime={currentTime}
+                current={current}
+                duration={duration}
                 style={{ position: "absolute", left: 0, top: 0 }}
                 // 在此传入你的异步函数，每个周期都会调用
-                loader={urLoader}
+                loader={(start: number, end: number) => getDanmaku(start, end)}
+                danmakuStyle={item => ({ color: item.color })}
             />
         </View>
     )
