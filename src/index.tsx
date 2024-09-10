@@ -1,6 +1,16 @@
 import { ComponentProps, useEffect, useMemo, useRef, useState } from "react"
 import { Animated, Easing, LayoutChangeEvent, StyleProp, Text, TextStyle, View } from "react-native"
 
+/** 弹幕原始数据 */
+export interface DanmakuItemRawData {
+    /** 文字内容 */
+    content: string
+    /** 时间戳 */
+    timestamp: number
+    /** 唯一标识 */
+    id: number
+}
+
 /** 弹幕展示的数据 */
 export interface DanmakuItemShowData<T extends DanmakuItemRawData> {
     /** 弹幕原始数据 */
@@ -13,6 +23,7 @@ export interface DanmakuItemShowData<T extends DanmakuItemRawData> {
     fontSize: number
 }
 
+/** 获取弹幕展示数据的配置 */
 export interface GetDanmakuPositionConfig<T extends DanmakuItemRawData> {
     /** 弹幕的原始数据 */
     data: T[]
@@ -40,16 +51,6 @@ export function getDanmakuPosition<T extends DanmakuItemRawData>(config: GetDanm
         }))
 }
 
-/** 弹幕原始数据 */
-export interface DanmakuItemRawData {
-    /** 文字内容 */
-    content: string
-    /** 时间戳 */
-    timestamp: number
-    /** 唯一标识 */
-    id: number
-}
-
 /** 用于获取弹幕数据的异步函数 */
 export type DanmakuDataLoader<T extends DanmakuItemRawData> = (
     /**
@@ -65,6 +66,7 @@ export type DanmakuDataLoader<T extends DanmakuItemRawData> = (
 /** 设置弹幕的样式 */
 export type GetDanmakuStyle<T extends DanmakuItemRawData> = (danmaku: T) => StyleProp<TextStyle>
 
+/** 弹幕播放器的基础配置 */
 export type DanmakuPlayerBaseProps<T extends DanmakuItemRawData> = {
     /**
      * 弹幕的周期，单位毫秒。
@@ -82,13 +84,13 @@ export type DanmakuPlayerBaseProps<T extends DanmakuItemRawData> = {
     /**
      * 视频时间是否发生了激变，单位毫秒
      *
-     * 也就是用户是否操作了视频的进度条。此时因为时间线发生了变化，屏幕上的弹幕将会被清除，重新渲染当前时间进度的弹幕
+     * 也就是用户是否操作了视频的进度条。此时因为时间线发生了变化，弹幕的动画将会重新计算并开始
      *
      * @default 1000
      */
     threshold?: number
 
-    /** 用于获取弹幕数据的异步函数 */
+    /** 用于获取弹幕数据的异步函数，函数接受两个参数，第一个参数是起始时间，第二个参数是结束时间，返回弹幕的原始数据 */
     loader: DanmakuDataLoader<T>
 
     /**
@@ -128,9 +130,11 @@ export type DanmakuPlayerBaseProps<T extends DanmakuItemRawData> = {
     height: number
 }
 
+/** 弹幕播放器配置 */
 export type DanmakuPlayerProps<T extends DanmakuItemRawData> = Omit<DanmakuPlayerBaseProps<T>, "width" | "height"> &
     Omit<ComponentProps<typeof View>, "children">
 
+/** 弹幕播放器底层 */
 export function DanmakuPlayerBase<T extends DanmakuItemRawData>(props: DanmakuPlayerBaseProps<T>) {
     const {
         period,
@@ -214,6 +218,7 @@ export function DanmakuPlayerBase<T extends DanmakuItemRawData>(props: DanmakuPl
     )
 }
 
+/** 弹幕播放器 */
 export default function DanmakuPlayer<T extends DanmakuItemRawData>(props: DanmakuPlayerProps<T>) {
     const {
         period,
