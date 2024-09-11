@@ -92,6 +92,13 @@ export type DanmakuPlayerBaseProps<T extends DanmakuItemRawData> = {
     duration: number;
 
     /**
+     * 视频倍速
+     *
+     * @default 1
+     */
+    rate?: number;
+
+    /**
      * 视频时间是否发生了激变，单位毫秒
      *
      * 也就是用户是否操作了视频的进度条。此时因为时间线发生了变化，弹幕的动画将会重新计算并开始
