@@ -82,6 +82,13 @@ export type DanmakuPlayerBaseProps<T extends DanmakuItemRawData> = {
     duration: number
 
     /**
+     * 视频倍速
+     *
+     * @default 1
+     */
+    rate?: number
+
+    /**
      * 视频时间是否发生了激变，单位毫秒
      *
      * 也就是用户是否操作了视频的进度条。此时因为时间线发生了变化，弹幕的动画将会重新计算并开始
@@ -140,6 +147,7 @@ export function DanmakuPlayerBase<T extends DanmakuItemRawData>(props: DanmakuPl
         period,
         lifetime,
         duration,
+        rate = 1,
         threshold = 1000,
         loader,
         preload = 1,
@@ -186,12 +194,13 @@ export function DanmakuPlayerBase<T extends DanmakuItemRawData>(props: DanmakuPl
 
     useEffect(() => {
         if (paused) return
+        console.log(rate)
         const fromValue = speed * current
         translateX.setValue(fromValue)
         const toValue = speed * duration
         const animation = Animated.timing(translateX, {
             toValue,
-            duration: (toValue - fromValue) / speed,
+            duration: (toValue - fromValue) / speed / rate,
             useNativeDriver: true,
             easing: Easing.linear
         })
@@ -224,6 +233,7 @@ export default function DanmakuPlayer<T extends DanmakuItemRawData>(props: Danma
         period,
         lifetime,
         duration,
+        rate = 1,
         threshold = 1000,
         loader,
         preload = 1,
@@ -256,6 +266,7 @@ export default function DanmakuPlayer<T extends DanmakuItemRawData>(props: Danma
                     period={period}
                     lifetime={lifetime}
                     duration={duration}
+                    rate={rate}
                     threshold={threshold}
                     loader={loader}
                     preload={preload}
